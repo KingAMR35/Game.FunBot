@@ -6,10 +6,13 @@ import os
 import base64
 from io import BytesIO
 from PIL import Image
+import requests
+
+
 
 
 class FusionBrainAPI:
-
+    
     def __init__(self, url, api_key, secret_key):
         self.URL = url
         self.AUTH_HEADERS = {
@@ -56,9 +59,7 @@ class FusionBrainAPI:
         image = Image.open(BytesIO(decoded_data))
         image.save(file_path)
         print(f"Файл сохранен в {file_path}")
-
-        
-        
+    
 
 
 if __name__ == '__main__':
