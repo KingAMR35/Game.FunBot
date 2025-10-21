@@ -33,7 +33,7 @@ URL = 'https://www.anekdot.ru/last/good/'
 def parser(url):
     r = requests.get(url)
     soup = b(r.text, 'html.parser')
-    anekdots = soup.find_all('div', class_='anekdot')
+    anekdots = soup.find_all('div', class_='text')
     return [c.text for c in anekdots]  
 list_of_jokes = parser(URL)
 random.shuffle(list_of_jokes)
@@ -58,7 +58,7 @@ def joke(message):
 
 
     keyboard = types.InlineKeyboardMarkup()
-    button = types.InlineKeyboardButton(text="Следующий", callback_data="button")
+    button = types.InlineKeyboardButton(text="Следующий", callback_data="next_joke")
     keyboard.row(button)
 
 
@@ -137,31 +137,28 @@ def prompt(message):
     bot.delete_message(chat_id, message.message_id + 1)
     bot.delete_message(chat_id, message.message_id - 1)
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_inline_message(call):
-    if call.data == 'button':
-        list_of_jokes = parser(URL)
-        random.shuffle(list_of_jokes)
+@bot.callback_query_handler(func=lambda call: call.data.startswith('next_joke'))
+def next_joke(call):
+    # Получаем список анекдотов
+    list_of_jokes = parser(URL)
+    random.shuffle(list_of_jokes)
 
-        old_joke = call.message.text
+    # Создаем клавиатуру с кнопкой "Следующий"
+    keyboard = types.InlineKeyboardMarkup()
+    button = types.InlineKeyboardButton(text="Следующий", callback_data="next_joke")
+    keyboard.row(button)
 
-    # Проверяем, чтобы новый анекдот отличался от старого
-        while list_of_jokes[-1] == old_joke:
-            random.shuffle(list_of_jokes)
+    # Отправляем следующий анекдот
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=list_of_jokes.pop(), reply_markup=keyboard)
 
-        # Создаем клавиатуру с кнопкой "Следующий"
-        keyboard = types.InlineKeyboardMarkup()
-        button = types.InlineKeyboardButton(text="Следующий", callback_data="button")
-        keyboard.row(button)
-
-        # Отправляем следующий анекдот
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=list_of_jokes.pop(), reply_markup=keyboard)
-    
+# Обработчик нажатия на кнопку версии
+@bot.callback_query_handler(func=lambda call: call.data.startswith('version_'))
+def version_info(call):
     versions = {
         "version_1.0": "Версия 1.0 — Первая публичная версия бота. В ней представлены базовые команды /start и /restart",
         "version_1.1": "Версия 1.1 — Улучшение стабильности исправление многих багов. Улучшение команды /game",
         "version_1.2": "Версия 1.2 — Добавление новых фоток в /meme",
-        "version_1.3": "Версия 1.3 — Добавление новой интересной команды /generate, которая основана на искуственном интелекте.",
+        "version_1.3": "Версия 1.3 — Добавление новой интересной команды /generate, которая основана на искусственном интеллекте.",
         "version_2.0": "Версия 2.0 — Глобальное обновление всего бота, а также глобальное улучшение команды /generate, полная переработка команды /joke, используя парсинг из html."
     }
 
@@ -170,5 +167,6 @@ def callback_inline_message(call):
 
     # Обновляем сообщение с описанием версии
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=version_description)
+
     
 bot.infinity_polling()
