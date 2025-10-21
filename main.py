@@ -1,7 +1,6 @@
 import telebot
 import time
 from random import choice
-import random
 import os
 from dotenv import load_dotenv
 from api_service import FusionBrainAPI
@@ -34,7 +33,7 @@ URL = 'https://www.anekdot.ru/last/good/'
 def parser(url):
     r = requests.get(url)
     soup = b(r.text, 'html.parser')
-    anekdots = soup.find_all('div', class_='text')
+    anekdots = soup.find_all('div', class_='anekdot')
     return [c.text for c in anekdots]  
 list_of_jokes = parser(URL)
 random.shuffle(list_of_jokes)
